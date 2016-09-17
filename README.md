@@ -21,29 +21,29 @@ primary Db's the default value is _ReplicaSet_<p>
 
 > _Important: you must specify a shared volume and mount it to the container's
 config directory [default: /var/config ] the example below mounts a host
-directory <your_host_vol_path> to the container's config volume.  
+directory /var/config to the container's config volume.  
 You can use any of the docker recommended ways of sharing volumes between
 containers i.e mounting a host directory or data volume container),just
 you specify the correct path for the config volume (/var/config)._
  
 >  _to change default config directory use the environment variable 
---CONFIG_DIR to setup your container. Make sure to update config volume
-path to reflect your new --CONFIG_DIR_
+--CONFIG_DIR to setup your container. Make sure to update host volume
+path to reflect your new --CONFIG_DIR name_
 
 add primary Db
 
-    docker run -it -e REPLICA_NAME=<your_replica_name> -v <your_host_vol_path>:/var/config 
+    docker run -it -e REPLICA_NAME=<your_replica_name> -v /var/config:/var/config 
     --name <your_container_name_1> rollymaduk/mongo-replica:local
 
 
 add another Db to the replica set<p>
 
-    docker run -it -e REPLICA_NAME=<your_replica_name> -v <your_host_vol_path>:/var/config 
+    docker run -it -e REPLICA_NAME=<your_replica_name> -v /var/config:/var/config 
     --name <your_container_name_2> rollymaduk/mongo-replica:local
 
 and another
 
-    docker run -it -e REPLICA_NAME=<your_replica_name> -v <your_host_vol_path>:/var/config 
+    docker run -it -e REPLICA_NAME=<your_replica_name> -v /var/config:/var/config 
     --name <your_container_name_3> rollymaduk/mongo-replica:local
 <p>
 
@@ -58,7 +58,7 @@ and another
          environment:
            REPLICA_NAME: "<your_replica_name>"
          volumes:
-         -  <your_host_vol_path>:/var/config
+         -  /var/config:/var/config
                 
  
  run in command line  
@@ -71,6 +71,43 @@ and another
     
   
  
+**Docker Cloud**  
+To deploy mongo-db replicaSet using docker-cloud, set up a stack
+file
 
+_stack.yml: stack file not requiring shared volumes_
 
+    <service_name>:
+      image: rollymaduk/mongo-replica:cloud
+      deployment_strategy: high_availability
+      target_num_containers: 3
+      environment:
+        REPLICA_NAME: <your_replica_name>
+        DOCKERCLOUD_AUTH: <your_docker_auth_key>
+      
+_stack.yml: stack file requiring shared volume_
 
+    <service_name>:
+      image: rollymaduk/mongo-replica:local
+      deployment_strategy: high_availability
+      target_num_containers: 3
+      volumes:
+        - /var/config:/var/config
+      environment:
+        REPLICA_NAME: <your_replica_name>
+        
+using docker-cloud cli run in command line (If stack file does not exist in cloud)
+
+    docker-cloud stack create --name <your_stack_name> -f <your_stack_file>
+    
+    docker-cloud stack start <your_stack_name>
+        
+
+using docker-cloud cli run in command line (If stack file already exists in cloud)
+
+    docker-cloud stack update -f <your_stack_file> <your_stack_name>
+    
+    docker-cloud stack redeploy <your_stack_name>
+
+Before using your docker-cloud cli make sure you authenticate with your credentials.
+you can learn more about docker-cloud cli [here](https://github.com/docker/dockercloud-cli)
