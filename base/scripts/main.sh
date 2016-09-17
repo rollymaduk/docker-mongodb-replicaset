@@ -7,10 +7,6 @@ HOST_FILE=$CONFIG_DIR/hosts.conf
 #method to initialize new ReplicaSet
 initNewReplica(){
     mongo --host $HOSTNAME --eval "rs.initiate()"
-    #expose port for
-    if [ ! -z $PORT ];then
-        socat -dddd TCP-LISTEN:$PORT,reuseaddr,fork TCP:db:27017
-    fi
 }
 
 #method for processing mongo replica configuration
