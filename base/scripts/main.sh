@@ -64,6 +64,7 @@ else
 fi
 echo "Adding container to replica set..."
 if [ ! -e  $MY_TEMP_FILE ] || [ ! -s $MY_TEMP_FILE ]; then
+echo "Instantiate a new mongo replicaSet..."
     mongo --host $HOSTNAME --eval "rs.initiate()"
 else
     addToReplica
