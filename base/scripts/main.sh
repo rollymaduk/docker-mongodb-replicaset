@@ -5,9 +5,12 @@ set -e
 HOST_FILE=$CONFIG_DIR/hosts.conf
 
 #method to initialize new ReplicaSet
-
 initNewReplica(){
     mongo --host $HOSTNAME --eval "rs.initiate()"
+    #expose port for
+    if [ ! -z $PORT ];then
+        socat -dddd TCP-LISTEN:$PORT,reuseaddr,fork TCP:db:27017
+    fi
 }
 
 #method for processing mongo replica configuration
@@ -23,7 +26,8 @@ addToReplica(){
              count=0
              while [ $(mongo --host $host --eval "rs.add('$HOSTNAME')"|grep 'ok'| awk '{print $NF}' | sed  s'/.$//') == '0' ]
              do
-                sleep 3
+                echo 'waiting 5 secs to retry...'
+                sleep 5
                 echo $count
                 if [ $count -eq $TRY_TIMES ];then
                     break;

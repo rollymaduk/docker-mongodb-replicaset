@@ -53,7 +53,7 @@ and another
  
     version: "2"
     services:
-      <your_container_name>:
+      <your_service_name>:
          image: rollymaduk/mongo-replica:local
          environment:
            REPLICA_NAME: "<your_replica_name>"
@@ -67,7 +67,7 @@ and another
     
  scale up to more containers
  
-    docker-compose scale <your_container_name>=3
+    docker-compose scale <your_service_name>=3
     
   
  
