@@ -4,13 +4,21 @@ set -e
 #global vars
 HOST_FILE=$CONFIG_DIR/hosts.conf
 
+#method to initialize new ReplicaSet
+
+initNewReplica(){
+    mongo --host $HOSTNAME --eval "rs.initiate()"
+}
+
 #method for processing mongo replica configuration
 addToReplica(){
+    success=0
     for host in $(cat $MY_TEMP_FILE);
     do
        if [ ! -z $host ]; then
            echo $host
-           isMaster=$(mongo --host $host --eval "db.isMaster()"| grep 'ismaster' | awk '{print $NF}' | sed  s'/.$//')
+           master=$(mongo --host $host --eval "db.isMaster()"| grep 'ismaster' | awk '{print $NF}' | sed  s'/.$//')
+           isMaster=${master:-'false'}
            if [ $isMaster == 'true' ];then
              count=0
              while [ $(mongo --host $host --eval "rs.add('$HOSTNAME')"|grep 'ok'| awk '{print $NF}' | sed  s'/.$//') == '0' ]
@@ -22,17 +30,20 @@ addToReplica(){
                 fi
                 count=`expr $count + 1`
              done
+             success=1
              break;
            fi
        fi
     done
-
+    if [ $success -eq 0 ]; then
+        initNewReplica
+    fi
 }
 
 
 #start mongod process
 echo Starting mongod process...
-mongod --fork --logpath $LOG_FILE --replSet $REPLICA_NAME $@
+mongod --fork --logpath $LOG_FILE --replSet $REPLICA_NAME
 echo 'waiting for child process to start...'
 sleep 5
 #create temporary file for managing container list
@@ -58,14 +69,15 @@ else
     echo Creating host file which does not exist...
         touch $HOST_FILE
     fi
-    echo Copying host file contents...
-    cp $HOST_FILE  $MY_TEMP_FILE
+    echo "Copying host file contents for replicaSet..."
+    cat $HOST_FILE  | grep $REPLICA_NAME | awk '{print $2}' > $MY_TEMP_FILE
 
 fi
+
 echo "Adding container to replica set..."
 if [ ! -e  $MY_TEMP_FILE ] || [ ! -s $MY_TEMP_FILE ]; then
 echo "Instantiate a new mongo replicaSet..."
-    mongo --host $HOSTNAME --eval "rs.initiate()"
+    initNewReplica
 else
     addToReplica
 fi
@@ -73,7 +85,7 @@ fi
 #update host file
 echo Updating host file...
 if [  -z  $(cat $HOST_FILE | grep $HOSTNAME) ] && [ -e $HOST_FILE ];then
-    echo $HOSTNAME >> $HOST_FILE
+    echo $REPLICA_NAME $HOSTNAME >> $HOST_FILE
 fi
 
 #clean up
