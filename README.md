@@ -110,4 +110,4 @@ using docker-cloud cli run in command line (If stack file already exists in clou
     docker-cloud stack redeploy <your_stack_name>
 
 Before using your docker-cloud cli make sure you authenticate with your credentials.
-you can learn more about docker-cloud cli [here](https://github.com/docker/dockercloud-cli)
+you can learn more about docker-cloud cli [here](https://github.com/docker/dockercloud-cli) 
